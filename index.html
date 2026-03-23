@@ -587,18 +587,34 @@ async function doLogin(){
   var p=document.getElementById('lp').value;
   await initDB();
   if((u==='admin'||u===DB.settings.name)&&p===DB.settings.password){
-    document.getElementById('loginScreen').classList.add('hidden');
-    document.getElementById('app').style.display='flex';
-    document.getElementById('sbName').textContent=DB.settings.name;
-    setTimeout(function(){document.getElementById('loginScreen').style.display='none';},600);
-    refreshDash();loadSettingsForm();
+    localStorage.setItem('np_logged','1');
+    showApp();
   }else{
     var el=document.getElementById('loginErr');
     el.style.display='flex';
     setTimeout(function(){el.style.display='none';},3000);
   }
 }
-function doLogout(){location.reload();}
+
+function showApp(){
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('app').style.display='flex';
+  document.getElementById('sbName').textContent=DB.settings.name;
+  setTimeout(function(){document.getElementById('loginScreen').style.display='none';},600);
+  refreshDash();loadSettingsForm();
+}
+
+function doLogout(){
+  localStorage.removeItem('np_logged');
+  location.reload();
+}
+
+async function checkAutoLogin(){
+  if(localStorage.getItem('np_logged')==='1'){
+    await initDB();
+    showApp();
+  }
+}
 
 // NAV
 var PAGE_TITLES={dashboard:'Ana Sayfa|Genel Özet',danisanlar:'Danışanlar|Kayıtlı hastalar',detay:'Danışan Detay|',randevular:'Randevular|Takvim',odemeler:'Ödemeler|Finansal takip',whatsapp:'WhatsApp|Hatırlatma',ayarlar:'Ayarlar|Sistem ayarları'};
@@ -1228,6 +1244,9 @@ window.addEventListener('load', function(){
 
 // Enter key for login
 document.addEventListener('keydown',function(e){if(e.key==='Enter'&&document.getElementById('loginScreen').style.display!=='none')doLogin();});
+
+// Otomatik giriş kontrolü
+checkAutoLogin();
 </script>
 
 <script>
