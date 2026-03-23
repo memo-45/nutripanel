@@ -7,8 +7,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="NutriPanel">
 <meta name="mobile-web-app-capable" content="yes">
-<link rel="manifest" href="/manifest.json">
-<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NutriPanel – Diyetisyen Yönetim Sistemi</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1228,7 +1228,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Enter'&&document.get
 <script>
 if('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
-    navigator.serviceWorker.register('/sw.js').then(function(reg) {
+    navigator.serviceWorker.register('./sw.js').then(function(reg) {
       console.log('SW registered');
     }).catch(function(err) {
       console.log('SW error:', err);
