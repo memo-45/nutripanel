@@ -401,9 +401,23 @@ textarea.fctl{resize:vertical;min-height:90px}
     <div class="page" id="page-randevular">
       <div class="sec-hd"><div class="sec-ttl"><i class="fas fa-calendar-alt"></i> Randevular</div>
 <div style="display:flex;gap:8px">
-
+<button class="btn btn-secondary" id="voiceBtn" onclick="startVoice()" style="background:#f0f9ff;border-color:#4a7ca8;color:#4a7ca8"><i class="fas fa-microphone"></i> Sesli Ekle</button>
 <button class="btn btn-primary" onclick="openModal('appt')"><i class="fas fa-plus"></i> Randevu Ekle</button>
 </div></div>
+<div id="voicePanel" style="display:none;background:var(--mint-light);border:2px solid var(--sage);border-radius:16px;padding:20px;margin-bottom:20px">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+    <div id="voiceDot" style="width:14px;height:14px;background:var(--sage);border-radius:50%"></div>
+    <div style="font-weight:700;color:var(--sage-dark)">Dinliyorum...</div>
+  </div>
+  <div id="voiceText" style="font-size:14px;color:var(--text-dark);background:white;border-radius:10px;padding:12px;min-height:44px;margin-bottom:12px">
+    Konuşun: "Ayşe yarın saat 14" veya "Mehmet 25 Mart saat 10"
+  </div>
+  <div id="voiceResult" style="display:none;background:white;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px"></div>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-primary btn-sm" id="voiceSaveBtn" onclick="saveVoiceAppt()" style="display:none"><i class="fas fa-save"></i> Kaydet</button>
+    <button class="btn btn-secondary btn-sm" onclick="stopVoice()"><i class="fas fa-times"></i> İptal</button>
+  </div>
+</div>
       <div class="tabs">
         <button class="tab-btn active" onclick="filterAppts('all',this)">Tümü</button>
         <button class="tab-btn" onclick="filterAppts('today',this)">Bugün</button>
@@ -1251,43 +1265,6 @@ window.addEventListener('load', function(){
 // ============ SESLİ KOMUT ============
 var recognition = null;
 var voiceApptData = null;
-
-function startVoice(){
-  if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
-    notify('Tarayıcınız sesli komutu desteklemiyor! Chrome kullanın.','error');
-    return;
-  }
-  document.getElementById('voicePanel').style.display='block';
-  document.getElementById('voiceText').textContent='Konuşun: "Ayşe Yılmaz, 25 Mart, saat 10"';
-  document.getElementById('voiceResult').style.display='none';
-  document.getElementById('voiceSaveBtn').style.display='none';
-  voiceApptData=null;
-
-  var SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
-  recognition=new SpeechRecognition();
-  recognition.lang='tr-TR';
-  recognition.continuous=false;
-  recognition.interimResults=true;
-
-  recognition.onresult=function(e){
-    var transcript='';
-    for(var i=0;i<e.results.length;i++){
-      transcript+=e.results[i][0].transcript;
-    }
-    document.getElementById('voiceText').textContent=transcript;
-    if(e.results[e.results.length-1].isFinal){
-      parseVoiceCommand(transcript);
-    }
-  };
-  recognition.onerror=function(e){
-    document.getElementById('voiceText').textContent='Hata: '+e.error+'. Tekrar deneyin.';
-  };
-  recognition.onend=function(){
-    document.getElementById('voiceDot').style.animation='none';
-    document.getElementById('voiceDot').style.background='#ccc';
-  };
-  recognition.start();
-}
 
 function stopVoice(){
   if(recognition)recognition.stop();
