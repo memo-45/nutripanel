@@ -1329,27 +1329,37 @@ function parseVoiceCommand(text){
 
   // Tarihi bul
   var months={
-    'ocak':1,'şubat':2,'subat':2,'mart':3,'nisan':4,'mayıs':5,'mayis':5,
-    'haziran':6,'temmuz':7,'ağustos':8,'agustos':8,'eylül':9,'eylul':9,
-    'ekim':10,'kasım':11,'kasim':11,'aralık':12,'aralik':12
+    'ocak':1,'subat':2,'mart':3,'nisan':4,'mayis':5,
+    'haziran':6,'temmuz':7,'agustos':8,'eylul':9,
+    'ekim':10,'kasim':11,'aralik':12
   };
+  // Türkçe karakterleri normalize et
+  var normText=text
+    .replace(/ş/g,'s').replace(/Ş/g,'S')
+    .replace(/ğ/g,'g').replace(/Ğ/g,'G')
+    .replace(/ü/g,'u').replace(/Ü/g,'U')
+    .replace(/ö/g,'o').replace(/Ö/g,'O')
+    .replace(/ç/g,'c').replace(/Ç/g,'C')
+    .replace(/ı/g,'i').replace(/İ/g,'I')
+    .replace(/â/g,'a').replace(/î/g,'i');
+
   var today=new Date();
   var dateFound=false;
 
   // "yarın" kontrolü
-  if(text.includes('yar')){
+  if(normText.includes('yarin')||normText.includes('yarın')){
     var tom=new Date(today.getTime()+24*60*60*1000);
     result.date=tom.toISOString().split('T')[0];
     dateFound=true;
   }
   // "bugün" kontrolü
-  else if(text.includes('bug')){
+  else if(normText.includes('bugun')||normText.includes('bugün')){
     result.date=today.toISOString().split('T')[0];
     dateFound=true;
   }
   // "X gün sonra" kontrolü
-  else{
-    var gunMatch=text.match(/(\d+)\s*g[uü]n\s*sonra/);
+  else {
+    var gunMatch=normText.match(/(\d+)\s*gun\s*sonra/);
     if(gunMatch){
       var days=parseInt(gunMatch[1]);
       var future=new Date(today.getTime()+days*24*60*60*1000);
@@ -1360,18 +1370,44 @@ function parseVoiceCommand(text){
 
   // Gün + ay formatı (25 mart, 3 nisan vs)
   if(!dateFound){
-    Object.keys(months).forEach(function(monthName){
-      if(text.includes(monthName)){
+    var monthKeys=Object.keys(months);
+    for(var mi=0;mi<monthKeys.length;mi++){
+      var monthName=monthKeys[mi];
+      if(normText.includes(monthName)){
         var monthNum=months[monthName];
-        var dayMatch=text.match(/(\d{1,2})\s*(?:'+monthName+')/);
-        if(!dayMatch) dayMatch=text.match(new RegExp('(\\d{1,2})\\s*'+monthName));
+        // Aydan önce gelen sayıyı bul
+        var re=new RegExp('(\d{1,2})\s*'+monthName);
+        var dayMatch=normText.match(re);
+        // Aydan sonra gelen sayıyı da dene
+        if(!dayMatch){
+          var re2=new RegExp(monthName+'\s*(\d{1,2})');
+          dayMatch=normText.match(re2);
+        }
         var day=dayMatch?parseInt(dayMatch[1]):today.getDate();
         var year=today.getFullYear();
-        if(monthNum<today.getMonth()+1) year++;
+        // Geçmiş ay ise sonraki yıl
+        if(monthNum<today.getMonth()+1||(monthNum===today.getMonth()+1&&day<today.getDate())) year++;
         result.date=year+'-'+String(monthNum).padStart(2,'0')+'-'+String(day).padStart(2,'0');
         dateFound=true;
+        break;
       }
-    });
+    }
+  }
+
+  // Sadece sayı varsa (örn: "25" → bu ayın 25'i)
+  if(!dateFound){
+    var numMatch=normText.match(/(\d{1,2})/);
+    if(numMatch){
+      var d=parseInt(numMatch[1]);
+      if(d>=1&&d<=31){
+        var yr=today.getFullYear();
+        var mo=today.getMonth()+1;
+        if(d<today.getDate()) mo++;
+        if(mo>12){mo=1;yr++;}
+        result.date=yr+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+        dateFound=true;
+      }
+    }
   }
 
   if(!result.date) result.date=new Date(today.getTime()+24*60*60*1000).toISOString().split('T')[0];
