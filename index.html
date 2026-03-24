@@ -488,6 +488,23 @@ textarea.fctl{resize:vertical;min-height:90px}
 </div>
 
 <!-- MODALS -->
+
+<!-- SABAH RAPOR MODAL -->
+<div class="modal-ov" id="m-rapor">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head" style="background:linear-gradient(135deg,#2d5a3d,#4a7c59);border-radius:20px 20px 0 0">
+      <div class="modal-ttl" style="color:white">
+        <i class="fas fa-sun" style="color:#f5c842"></i>
+        <span>Günaydın! Bugünün Randevuları</span>
+      </div>
+      <button class="modal-x" onclick="closeModal('rapor')" style="background:rgba(255,255,255,0.2);color:white"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="rapor-content"></div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" onclick="closeModal('rapor')"><i class="fas fa-check"></i> Tamam</button>
+    </div>
+  </div>
+</div>
 <div class="modal-ov" id="m-client">
   <div class="modal">
     <div class="modal-head"><div class="modal-ttl"><i class="fas fa-user-plus"></i> <span id="m-client-ttl">Yeni Danışan</span></div><button class="modal-x" onclick="closeModal('client')"><i class="fas fa-times"></i></button></div>
@@ -626,6 +643,7 @@ function showApp(){
   var ua=DB.appointments.filter(function(a){return new Date(a.date)>=new Date(today);}).length;
   document.getElementById('nb-appts').textContent=ua;
   refreshDash();loadSettingsForm();
+  setTimeout(checkMorningReport, 1500);
 }
 
 function doLogout(){
@@ -1593,6 +1611,64 @@ async function saveVoiceAppt(){
   logAct(voiceApptData.client.name+' randevu (sesli)','fas fa-microphone');
   notify(voiceApptData.client.name+' randevusu eklendi!');
   stopVoice();refreshDash();renderAppts();
+}
+
+
+
+// ============ SABAH RAPORU ============
+function checkMorningReport(){
+  var now=new Date();
+  var hour=now.getHours();
+  // Sabah 7 ile 12 arası göster
+  if(hour<7||hour>12)return;
+
+  // Bugün gösterildi mi?
+  var lastShown=localStorage.getItem('np_rapor_date');
+  var today=now.toDateString();
+  if(lastShown===today)return;
+
+  // Bugünkü randevuları bul
+  var todayStr=now.toISOString().split('T')[0];
+  var todayAppts=DB.appointments.filter(function(a){return a.date===todayStr;}).sort(function(a,b){return a.time.localeCompare(b.time);});
+
+  // Göster
+  localStorage.setItem('np_rapor_date',today);
+
+  var content=document.getElementById('rapor-content');
+  var dateStr=now.toLocaleDateString('tr-TR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  if(!todayAppts.length){
+    content.innerHTML=
+      '<div style="text-align:center;padding:16px">'+
+      '<div style="font-size:48px;margin-bottom:12px">🌿</div>'+
+      '<div style="font-size:15px;color:var(--text-mid);margin-bottom:4px">'+dateStr+'</div>'+
+      '<div style="font-size:16px;font-weight:700;color:var(--text-dark);margin-top:16px">Bugün randevu yok!</div>'+
+      '<div style="font-size:13px;color:var(--text-soft);margin-top:8px">Rahat bir gün sizi bekliyor 😊</div>'+
+      '</div>';
+  } else {
+    var rows=todayAppts.map(function(a){
+      var c=DB.clients.find(function(x){return x.id===a.clientId;});
+      return '<div class="appt-item" style="margin-bottom:8px">'+
+        '<div class="appt-time" style="min-width:64px;padding:8px"><div class="appt-hr" style="font-size:16px">'+a.time+'</div></div>'+
+        '<div class="appt-info">'+
+          '<div class="appt-name">'+(c?c.name:'?')+'</div>'+
+          '<div class="appt-type">'+a.type+' • '+a.duration+' dk</div>'+
+        '</div>'+
+        '<button class="wa-btn" style="padding:6px 10px;font-size:11px" data-cid="'+(c?c.id:'')+'" data-date="'+a.date+'" data-time="'+a.time+'" onclick="sendWA(this.dataset.cid,this.dataset.date,this.dataset.time)"><i class="fab fa-whatsapp"></i></button>'+
+      '</div>';
+    }).join('');
+
+    content.innerHTML=
+      '<div style="margin-bottom:16px">'+
+        '<div style="font-size:13px;color:var(--text-soft)">'+dateStr+'</div>'+
+        '<div style="font-size:22px;font-weight:800;color:var(--sage);margin-top:4px">'+todayAppts.length+' Randevu</div>'+
+      '</div>'+
+      rows;
+  }
+
+  setTimeout(function(){
+    document.getElementById('m-rapor').classList.add('open');
+  }, 1000);
 }
 
 
