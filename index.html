@@ -405,20 +405,6 @@ textarea.fctl{resize:vertical;min-height:90px}
 <i class="fas fa-microphone"></i> Sesli Ekle</button>
 <button class="btn btn-primary" onclick="openModal('appt')"><i class="fas fa-plus"></i> Randevu Ekle</button>
 </div></div>
-<div id="voicePanel" style="display:none;background:linear-gradient(135deg,#f0f9ff,#e8f4fd);border:2px solid #4a7ca8;border-radius:16px;padding:20px;margin-bottom:20px">
-  <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-    <div id="voiceDot" style="width:16px;height:16px;background:#4a7ca8;border-radius:50%;animation:pulse 1s infinite"></div>
-    <div style="font-weight:700;color:#2c5f8a">Dinliyorum...</div>
-  </div>
-  <div id="voiceText" style="font-size:14px;color:#3d5a47;background:white;border-radius:10px;padding:12px;min-height:44px;margin-bottom:12px">
-    Konuşun: "Ayşe Yılmaz, 25 Mart, saat 10"
-  </div>
-  <div id="voiceResult" style="display:none;background:var(--mint-light);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px"></div>
-  <div style="display:flex;gap:8px">
-    <button class="btn btn-primary btn-sm" id="voiceSaveBtn" onclick="saveVoiceAppt()" style="display:none"><i class="fas fa-save"></i> Kaydet</button>
-    <button class="btn btn-secondary btn-sm" onclick="stopVoice()"><i class="fas fa-times"></i> İptal</button>
-  </div>
-</div>
       <div class="tabs">
         <button class="tab-btn active" onclick="filterAppts('all',this)">Tümü</button>
         <button class="tab-btn" onclick="filterAppts('today',this)">Bugün</button>
@@ -486,6 +472,42 @@ textarea.fctl{resize:vertical;min-height:90px}
     </div>
 
   </main>
+</div>
+
+<!-- GLOBAL SESLİ ASISTAN -->
+<div id="voiceAssistant" style="position:fixed;bottom:24px;right:24px;z-index:1000">
+  <button onclick="toggleVoiceAssistant()" id="vaBtn" style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#2d5a3d,#4a7c59);border:none;box-shadow:0 4px 20px rgba(45,90,61,0.5);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.3s">
+    <i class="fas fa-microphone" style="color:white;font-size:22px"></i>
+  </button>
+</div>
+
+<div id="vaPanel" style="display:none;position:fixed;bottom:96px;right:24px;z-index:1000;width:320px;background:white;border-radius:20px;box-shadow:0 8px 32px rgba(0,0,0,0.2);border:1px solid var(--border-light);overflow:hidden">
+  <div style="background:linear-gradient(135deg,#2d5a3d,#4a7c59);padding:16px 20px;display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div id="vaDot" style="width:10px;height:10px;background:#6aab7e;border-radius:50%"></div>
+      <span style="color:white;font-weight:700;font-size:15px">NutriAsistan</span>
+    </div>
+    <button onclick="closeVA()" style="background:rgba(255,255,255,0.2);border:none;color:white;width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:14px">✕</button>
+  </div>
+  <div style="padding:16px">
+    <div id="vaStatus" style="font-size:13px;color:var(--text-soft);margin-bottom:12px;text-align:center">Mikrofona tıklayın ve konuşun</div>
+    <div id="vaText" style="background:var(--mint-light);border-radius:10px;padding:12px;font-size:13px;color:var(--text-dark);min-height:44px;margin-bottom:12px;line-height:1.5">
+      Örnek: "Ayşe yarın saat 14 randevu"<br>
+      "Mehmet 500 lira ödeme aldım"<br>
+      "Ali adında yeni danışan ekle"
+    </div>
+    <div id="vaResult" style="display:none;background:var(--mint);border-radius:10px;padding:12px;font-size:13px;margin-bottom:12px"></div>
+    <div style="display:flex;gap:8px">
+      <button onclick="startVA()" id="vaStartBtn" class="btn btn-primary" style="flex:1"><i class="fas fa-microphone"></i> Konuş</button>
+      <button onclick="saveVAResult()" id="vaSaveBtn" class="btn btn-gold" style="display:none;flex:1"><i class="fas fa-save"></i> Kaydet</button>
+    </div>
+    <div style="margin-top:12px;font-size:11px;color:var(--text-muted);line-height:1.6">
+      <strong>Komutlar:</strong><br>
+      📅 "İsim tarih saat randevu"<br>
+      💰 "İsim miktar ödeme"<br>
+      👤 "İsim yeni danışan ekle"
+    </div>
+  </div>
 </div>
 
 <!-- MODALS -->
