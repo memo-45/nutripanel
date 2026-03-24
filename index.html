@@ -221,6 +221,7 @@ textarea.fctl{resize:vertical;min-height:90px}
   .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99}
   .sidebar-overlay.show{display:block}
 }
+@keyframes pulse{0%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.3)}100%{opacity:1;transform:scale(1)}}
 /* LOADER */
 #loader{position:fixed;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--sage-dark),var(--sage-light));z-index:9999;opacity:0;transition:opacity .3s}
 ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--mint-light)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
@@ -398,7 +399,26 @@ textarea.fctl{resize:vertical;min-height:90px}
 
     <!-- RANDEVULAR -->
     <div class="page" id="page-randevular">
-      <div class="sec-hd"><div class="sec-ttl"><i class="fas fa-calendar-alt"></i> Randevular</div><button class="btn btn-primary" onclick="openModal('appt')"><i class="fas fa-plus"></i> Randevu Ekle</button></div>
+      <div class="sec-hd"><div class="sec-ttl"><i class="fas fa-calendar-alt"></i> Randevular</div>
+<div style="display:flex;gap:8px">
+<button class="btn btn-secondary" onclick="startVoice()" id="voiceBtn" style="background:#f0f9ff;border-color:#4a7ca8;color:#4a7ca8">
+<i class="fas fa-microphone"></i> Sesli Ekle</button>
+<button class="btn btn-primary" onclick="openModal('appt')"><i class="fas fa-plus"></i> Randevu Ekle</button>
+</div></div>
+<div id="voicePanel" style="display:none;background:linear-gradient(135deg,#f0f9ff,#e8f4fd);border:2px solid #4a7ca8;border-radius:16px;padding:20px;margin-bottom:20px">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+    <div id="voiceDot" style="width:16px;height:16px;background:#4a7ca8;border-radius:50%;animation:pulse 1s infinite"></div>
+    <div style="font-weight:700;color:#2c5f8a">Dinliyorum...</div>
+  </div>
+  <div id="voiceText" style="font-size:14px;color:#3d5a47;background:white;border-radius:10px;padding:12px;min-height:44px;margin-bottom:12px">
+    Konuşun: "Ayşe Yılmaz, 25 Mart, saat 10"
+  </div>
+  <div id="voiceResult" style="display:none;background:var(--mint-light);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px"></div>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-primary btn-sm" id="voiceSaveBtn" onclick="saveVoiceAppt()" style="display:none"><i class="fas fa-save"></i> Kaydet</button>
+    <button class="btn btn-secondary btn-sm" onclick="stopVoice()"><i class="fas fa-times"></i> İptal</button>
+  </div>
+</div>
       <div class="tabs">
         <button class="tab-btn active" onclick="filterAppts('all',this)">Tümü</button>
         <button class="tab-btn" onclick="filterAppts('today',this)">Bugün</button>
@@ -1241,6 +1261,180 @@ window.addEventListener('load', function(){
   }
   history.replaceState({page: hash||'dashboard'}, '', '#'+(hash||'dashboard'));
 });
+
+
+// ============ SESLİ KOMUT ============
+var recognition = null;
+var voiceApptData = null;
+
+function startVoice(){
+  if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
+    notify('Tarayıcınız sesli komutu desteklemiyor! Chrome kullanın.','error');
+    return;
+  }
+  document.getElementById('voicePanel').style.display='block';
+  document.getElementById('voiceText').textContent='Konuşun: "Ayşe Yılmaz, 25 Mart, saat 10"';
+  document.getElementById('voiceResult').style.display='none';
+  document.getElementById('voiceSaveBtn').style.display='none';
+  voiceApptData=null;
+
+  var SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recognition=new SpeechRecognition();
+  recognition.lang='tr-TR';
+  recognition.continuous=false;
+  recognition.interimResults=true;
+
+  recognition.onresult=function(e){
+    var transcript='';
+    for(var i=0;i<e.results.length;i++){
+      transcript+=e.results[i][0].transcript;
+    }
+    document.getElementById('voiceText').textContent=transcript;
+    if(e.results[e.results.length-1].isFinal){
+      parseVoiceCommand(transcript);
+    }
+  };
+  recognition.onerror=function(e){
+    document.getElementById('voiceText').textContent='Hata: '+e.error+'. Tekrar deneyin.';
+  };
+  recognition.onend=function(){
+    document.getElementById('voiceDot').style.animation='none';
+    document.getElementById('voiceDot').style.background='#ccc';
+  };
+  recognition.start();
+}
+
+function stopVoice(){
+  if(recognition)recognition.stop();
+  document.getElementById('voicePanel').style.display='none';
+  voiceApptData=null;
+}
+
+function parseVoiceCommand(text){
+  text=text.toLowerCase();
+  var result={clientName:null,date:null,time:null};
+
+  // Danışan adını bul
+  var foundClient=null;
+  DB.clients.forEach(function(c){
+    var name=c.name.toLowerCase();
+    var parts=name.split(' ');
+    parts.forEach(function(part){
+      if(part.length>2&&text.includes(part)){
+        foundClient=c;
+      }
+    });
+  });
+  result.client=foundClient;
+
+  // Tarihi bul
+  var months={
+    'ocak':1,'şubat':2,'subat':2,'mart':3,'nisan':4,'mayıs':5,'mayis':5,
+    'haziran':6,'temmuz':7,'ağustos':8,'agustos':8,'eylül':9,'eylul':9,
+    'ekim':10,'kasım':11,'kasim':11,'aralık':12,'aralik':12
+  };
+  var today=new Date();
+  var dateFound=false;
+
+  // "yarın" kontrolü
+  if(text.includes('yar')){
+    var tom=new Date(today.getTime()+24*60*60*1000);
+    result.date=tom.toISOString().split('T')[0];
+    dateFound=true;
+  }
+  // "bugün" kontrolü
+  else if(text.includes('bug')){
+    result.date=today.toISOString().split('T')[0];
+    dateFound=true;
+  }
+  // "X gün sonra" kontrolü
+  else{
+    var gunMatch=text.match(/(\d+)\s*g[uü]n\s*sonra/);
+    if(gunMatch){
+      var days=parseInt(gunMatch[1]);
+      var future=new Date(today.getTime()+days*24*60*60*1000);
+      result.date=future.toISOString().split('T')[0];
+      dateFound=true;
+    }
+  }
+
+  // Gün + ay formatı (25 mart, 3 nisan vs)
+  if(!dateFound){
+    Object.keys(months).forEach(function(monthName){
+      if(text.includes(monthName)){
+        var monthNum=months[monthName];
+        var dayMatch=text.match(/(\d{1,2})\s*(?:'+monthName+')/);
+        if(!dayMatch) dayMatch=text.match(new RegExp('(\\d{1,2})\\s*'+monthName));
+        var day=dayMatch?parseInt(dayMatch[1]):today.getDate();
+        var year=today.getFullYear();
+        if(monthNum<today.getMonth()+1) year++;
+        result.date=year+'-'+String(monthNum).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+        dateFound=true;
+      }
+    });
+  }
+
+  if(!result.date) result.date=new Date(today.getTime()+24*60*60*1000).toISOString().split('T')[0];
+
+  // Saati bul
+  var timeMatch=text.match(/saat\s*(\d{1,2})(?:[:\s.](\d{2}))?/);
+  if(!timeMatch) timeMatch=text.match(/(\d{1,2})[:\s.](\d{2})/);
+  if(!timeMatch) timeMatch=text.match(/(\d{1,2})\s*(?:de|da|'de|'da)/);
+  if(timeMatch){
+    var h=String(parseInt(timeMatch[1])).padStart(2,'0');
+    var m=timeMatch[2]?String(parseInt(timeMatch[2])).padStart(2,'0'):'00';
+    result.time=h+':'+m;
+  } else {
+    result.time='09:00';
+  }
+
+  voiceApptData=result;
+  showVoiceResult(result);
+}
+
+function showVoiceResult(r){
+  var el=document.getElementById('voiceResult');
+  var saveBtn=document.getElementById('voiceSaveBtn');
+  
+  if(!r.client){
+    el.style.display='block';
+    el.innerHTML='<i class="fas fa-exclamation-triangle" style="color:var(--gold)"></i> <strong>Danışan bulunamadı!</strong> Tam isim söyleyin.<br>Kayıtlı danışanlar: '+DB.clients.map(function(c){return c.name;}).join(', ');
+    saveBtn.style.display='none';
+    return;
+  }
+
+  var dateStr=new Date(r.date).toLocaleDateString('tr-TR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  el.style.display='block';
+  el.innerHTML='<i class="fas fa-check-circle" style="color:var(--sage)"></i> <strong>Randevu Bilgileri:</strong><br>'+
+    '<div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
+    '<div><i class="fas fa-user" style="color:var(--sage)"></i> '+r.client.name+'</div>'+
+    '<div><i class="fas fa-clock" style="color:var(--sage)"></i> '+r.time+'</div>'+
+    '<div style="grid-column:1/-1"><i class="fas fa-calendar" style="color:var(--sage)"></i> '+dateStr+'</div>'+
+    '</div>';
+  saveBtn.style.display='inline-flex';
+}
+
+async function saveVoiceAppt(){
+  if(!voiceApptData||!voiceApptData.client)return;
+  var a={
+    id:Date.now().toString(),
+    clientId:voiceApptData.client.id,
+    date:voiceApptData.date,
+    time:voiceApptData.time,
+    duration:'60',
+    type:'Takip',
+    note:'Sesli komut ile eklendi'
+  };
+  DB.appointments.push(a);
+  loader(true);
+  await sbSet('appointments',a.id,a);
+  loader(false);
+  logAct(voiceApptData.client.name+' randevu eklendi (sesli)','fas fa-microphone');
+  notify(voiceApptData.client.name+' randevusu eklendi!');
+  stopVoice();
+  refreshDash();
+  renderAppts();
+}
 
 // Enter key for login
 document.addEventListener('keydown',function(e){if(e.key==='Enter'&&document.getElementById('loginScreen').style.display!=='none')doLogin();});
