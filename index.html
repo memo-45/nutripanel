@@ -1545,37 +1545,64 @@ function parseVoice(text){
   } else if(norm.includes('bugun')){
     date=today.toISOString().split('T')[0];
   } else {
-    var gm=norm.match(/(\d+)\s*gun\s*sonra/);
-    if(gm){
-      date=new Date(today.getTime()+parseInt(gm[1])*86400000).toISOString().split('T')[0];
-    } else {
+    // X gun sonra
+    var gunParts=norm.split(' ');
+    var gunIdx=-1;
+    for(var gi=0;gi<gunParts.length;gi++){
+      if(gunParts[gi]==='gun'||gunParts[gi]==='guen'){gunIdx=gi;break;}
+    }
+    if(gunIdx>0&&gunParts[gunIdx+1]==='sonra'){
+      var gunSay=parseInt(gunParts[gunIdx-1]);
+      if(!isNaN(gunSay)){
+        date=new Date(today.getTime()+gunSay*86400000).toISOString().split('T')[0];
+      }
+    }
+    if(!date){
+      // Yazıyla gün sayısı
+      var gunSayMap={'bir':1,'iki':2,'uc':3,'dort':4,'bes':5,'alti':6,'yedi':7,'sekiz':8,'dokuz':9,'on':10};
+      Object.keys(gunSayMap).forEach(function(k){
+        if(norm.includes(k+' gun sonra')||norm.includes(k+' guen sonra')){
+          date=new Date(today.getTime()+gunSayMap[k]*86400000).toISOString().split('T')[0];
+        }
+      });
+    }
+    if(!date){
+      // Ay ismi ara
       var mks=Object.keys(months);
       for(var i=0;i<mks.length;i++){
         if(norm.includes(mks[i])){
           var mo=months[mks[i]];
-          var re1=new RegExp('(\d{1,2})\s*'+mks[i]);
-          var re2=new RegExp(mks[i]+'\s*(\d{1,2})');
-          var dm=norm.match(re1)||norm.match(re2);
-          var day=dm?parseInt(dm[1]):today.getDate();
+          // Sayıyı bul - ay adından önce veya sonra
+          var normWords=norm.split(/\s+/);
+          var monthPos=normWords.indexOf(mks[i]);
+          var day=null;
+          // Önce bak
+          if(monthPos>0){var prev=parseInt(normWords[monthPos-1]);if(!isNaN(prev)&&prev>=1&&prev<=31)day=prev;}
+          // Sonra bak
+          if(!day&&monthPos<normWords.length-1){var next=parseInt(normWords[monthPos+1]);if(!isNaN(next)&&next>=1&&next<=31)day=next;}
+          if(!day)day=today.getDate();
           var yr=today.getFullYear();
           if(mo<today.getMonth()+1||(mo===today.getMonth()+1&&day<today.getDate()))yr++;
           date=yr+'-'+String(mo).padStart(2,'0')+'-'+String(day).padStart(2,'0');
           break;
         }
       }
-      if(!date){
-        var nm=norm.match(/(\d{1,2})/);
-        if(nm){
-          var d=parseInt(nm[1]);
-          if(d>=1&&d<=31){
-            var yr2=today.getFullYear(),mo2=today.getMonth()+1;
-            if(d<today.getDate()){mo2++;if(mo2>12){mo2=1;yr2++;}}
-            date=yr2+'-'+String(mo2).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-          }
+    }
+    if(!date){
+      // Sadece sayı varsa - bu ayın o günü
+      var words=norm.split(/\s+/);
+      for(var wi=0;wi<words.length;wi++){
+        var num=parseInt(words[wi]);
+        if(!isNaN(num)&&num>=1&&num<=31){
+          var yr2=today.getFullYear(),mo2=today.getMonth()+1;
+          if(num<today.getDate()){mo2++;if(mo2>12){mo2=1;yr2++;}}
+          date=yr2+'-'+String(mo2).padStart(2,'0')+'-'+String(num).padStart(2,'0');
+          break;
         }
       }
     }
   }
+  if(!date)date=new Date(today.getTime()+86400000).toISOString().split('T')[0];
   if(!date)date=new Date(today.getTime()+86400000).toISOString().split('T')[0];
 
   // Saat bul
