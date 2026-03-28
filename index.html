@@ -401,23 +401,9 @@ textarea.fctl{resize:vertical;min-height:90px}
     <div class="page" id="page-randevular">
       <div class="sec-hd"><div class="sec-ttl"><i class="fas fa-calendar-alt"></i> Randevular</div>
 <div style="display:flex;gap:8px">
-<button class="btn btn-secondary" id="voiceBtn" onclick="startVoice()" style="background:#f0f9ff;border-color:#4a7ca8;color:#4a7ca8"><i class="fas fa-microphone"></i> Sesli Ekle</button>
+
 <button class="btn btn-primary" onclick="openModal('appt')"><i class="fas fa-plus"></i> Randevu Ekle</button>
 </div></div>
-<div id="voicePanel" style="display:none;background:var(--mint-light);border:2px solid var(--sage);border-radius:16px;padding:20px;margin-bottom:20px">
-  <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-    <div id="voiceDot" style="width:14px;height:14px;background:var(--sage);border-radius:50%"></div>
-    <div style="font-weight:700;color:var(--sage-dark)">Dinliyorum...</div>
-  </div>
-  <div id="voiceText" style="font-size:14px;color:var(--text-dark);background:white;border-radius:10px;padding:12px;min-height:44px;margin-bottom:12px">
-    Konuşun: "Ayşe yarın saat 14" veya "Mehmet 25 Mart saat 10"
-  </div>
-  <div id="voiceResult" style="display:none;background:white;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px"></div>
-  <div style="display:flex;gap:8px">
-    <button class="btn btn-primary btn-sm" id="voiceSaveBtn" onclick="saveVoiceAppt()" style="display:none"><i class="fas fa-save"></i> Kaydet</button>
-    <button class="btn btn-secondary btn-sm" onclick="stopVoice()"><i class="fas fa-times"></i> İptal</button>
-  </div>
-</div>
       <div class="tabs">
         <button class="tab-btn active" onclick="filterAppts('all',this)">Tümü</button>
         <button class="tab-btn" onclick="filterAppts('today',this)">Bugün</button>
@@ -488,56 +474,6 @@ textarea.fctl{resize:vertical;min-height:90px}
 </div>
 
 <!-- MODALS -->
-
-<!-- DİYET LİSTESİ MODAL -->
-<div class="modal-ov" id="m-diet">
-  <div class="modal" style="max-width:640px">
-    <div class="modal-head">
-      <div class="modal-ttl"><i class="fas fa-apple-alt" style="color:var(--sage)"></i> Diyet Listesi</div>
-      <button class="modal-x" onclick="closeModal('diet')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <div style="background:var(--mint-light);border-radius:12px;padding:14px;margin-bottom:20px;font-size:13px;color:var(--text-mid)">
-        <i class="fas fa-info-circle" style="color:var(--sage)"></i>
-        Listeyi kaydettiginizde danisana WhatsApp ile link gonderebilirsiniz.
-      </div>
-      <div class="fgrid">
-        <div class="fg full"><label class="flabel">Program Baslangic Tarihi</label><input class="fctl" type="date" id="diet-date"></div>
-        <div class="fg full"><label class="flabel">Sabah Kahvaltisi</label><textarea class="fctl" id="diet-breakfast" rows="3" placeholder="2 yumurta, 1 dilim tam tahilli ekmek..."></textarea></div>
-        <div class="fg full"><label class="flabel">Kusluk (Ara Ogun)</label><textarea class="fctl" id="diet-snack1" rows="2" placeholder="1 elma, 10 badem..."></textarea></div>
-        <div class="fg full"><label class="flabel">Ogle Yemegi</label><textarea class="fctl" id="diet-lunch" rows="3" placeholder="1 porsiyon izgara tavuk, bulgur pilavi..."></textarea></div>
-        <div class="fg full"><label class="flabel">Ikindi (Ara Ogun)</label><textarea class="fctl" id="diet-snack2" rows="2" placeholder="1 kase yogurt, 1 muz..."></textarea></div>
-        <div class="fg full"><label class="flabel">Aksam Yemegi</label><textarea class="fctl" id="diet-dinner" rows="3" placeholder="1 porsiyon balik, haslanmis sebze..."></textarea></div>
-        <div class="fg full"><label class="flabel">Gece (Opsiyonel)</label><textarea class="fctl" id="diet-snack3" rows="2" placeholder="1 bardak sut..."></textarea></div>
-        <div class="fg"><label class="flabel">Gunluk Su</label><input class="fctl" id="diet-water" placeholder="En az 2.5 litre"></div>
-        <div class="fg"><label class="flabel">Egzersiz</label><input class="fctl" id="diet-exercise" placeholder="30 dk yuruyus"></div>
-        <div class="fg full"><label class="flabel">Yasaklar / Dikkat Edilecekler</label><textarea class="fctl" id="diet-forbidden" rows="2" placeholder="Seker, beyaz ekmek yasak..."></textarea></div>
-        <div class="fg full"><label class="flabel">Ozel Notlar</label><textarea class="fctl" id="diet-notes" rows="2" placeholder="Danisana ozel notlar..."></textarea></div>
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('diet')">Iptal</button>
-      <button class="btn btn-primary" onclick="saveDiet()"><i class="fas fa-save"></i> Kaydet ve Link Olustur</button>
-    </div>
-  </div>
-</div>
-
-<!-- SABAH RAPOR MODAL -->
-<div class="modal-ov" id="m-rapor">
-  <div class="modal" style="max-width:480px">
-    <div class="modal-head" style="background:linear-gradient(135deg,#2d5a3d,#4a7c59);border-radius:20px 20px 0 0">
-      <div class="modal-ttl" style="color:white">
-        <i class="fas fa-sun" style="color:#f5c842"></i>
-        <span>Günaydın! Bugünün Randevuları</span>
-      </div>
-      <button class="modal-x" onclick="closeModal('rapor')" style="background:rgba(255,255,255,0.2);color:white"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body" id="rapor-content"></div>
-    <div class="modal-foot">
-      <button class="btn btn-primary" onclick="closeModal('rapor')"><i class="fas fa-check"></i> Tamam</button>
-    </div>
-  </div>
-</div>
 <div class="modal-ov" id="m-client">
   <div class="modal">
     <div class="modal-head"><div class="modal-ttl"><i class="fas fa-user-plus"></i> <span id="m-client-ttl">Yeni Danışan</span></div><button class="modal-x" onclick="closeModal('client')"><i class="fas fa-times"></i></button></div>
@@ -670,13 +606,7 @@ function showApp(){
   document.getElementById('app').style.display='flex';
   document.getElementById('sbName').textContent=DB.settings.name;
   setTimeout(function(){document.getElementById('loginScreen').style.display='none';},600);
-  // Badge'leri hemen güncelle
-  document.getElementById('nb-clients').textContent=DB.clients.length;
-  var today=new Date().toDateString();
-  var ua=DB.appointments.filter(function(a){return new Date(a.date)>=new Date(today);}).length;
-  document.getElementById('nb-appts').textContent=ua;
   refreshDash();loadSettingsForm();
-  setTimeout(checkMorningReport, 1500);
 }
 
 function doLogout(){
@@ -1323,6 +1253,43 @@ window.addEventListener('load', function(){
 var recognition = null;
 var voiceApptData = null;
 
+function startVoice(){
+  if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
+    notify('Tarayıcınız sesli komutu desteklemiyor! Chrome kullanın.','error');
+    return;
+  }
+  document.getElementById('voicePanel').style.display='block';
+  document.getElementById('voiceText').textContent='Konuşun: "Ayşe Yılmaz, 25 Mart, saat 10"';
+  document.getElementById('voiceResult').style.display='none';
+  document.getElementById('voiceSaveBtn').style.display='none';
+  voiceApptData=null;
+
+  var SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recognition=new SpeechRecognition();
+  recognition.lang='tr-TR';
+  recognition.continuous=false;
+  recognition.interimResults=true;
+
+  recognition.onresult=function(e){
+    var transcript='';
+    for(var i=0;i<e.results.length;i++){
+      transcript+=e.results[i][0].transcript;
+    }
+    document.getElementById('voiceText').textContent=transcript;
+    if(e.results[e.results.length-1].isFinal){
+      parseVoiceCommand(transcript);
+    }
+  };
+  recognition.onerror=function(e){
+    document.getElementById('voiceText').textContent='Hata: '+e.error+'. Tekrar deneyin.';
+  };
+  recognition.onend=function(){
+    document.getElementById('voiceDot').style.animation='none';
+    document.getElementById('voiceDot').style.background='#ccc';
+  };
+  recognition.start();
+}
+
 function stopVoice(){
   if(recognition)recognition.stop();
   document.getElementById('voicePanel').style.display='none';
@@ -1579,64 +1546,37 @@ function parseVoice(text){
   } else if(norm.includes('bugun')){
     date=today.toISOString().split('T')[0];
   } else {
-    // X gun sonra
-    var gunParts=norm.split(' ');
-    var gunIdx=-1;
-    for(var gi=0;gi<gunParts.length;gi++){
-      if(gunParts[gi]==='gun'||gunParts[gi]==='guen'){gunIdx=gi;break;}
-    }
-    if(gunIdx>0&&gunParts[gunIdx+1]==='sonra'){
-      var gunSay=parseInt(gunParts[gunIdx-1]);
-      if(!isNaN(gunSay)){
-        date=new Date(today.getTime()+gunSay*86400000).toISOString().split('T')[0];
-      }
-    }
-    if(!date){
-      // Yazıyla gün sayısı
-      var gunSayMap={'bir':1,'iki':2,'uc':3,'dort':4,'bes':5,'alti':6,'yedi':7,'sekiz':8,'dokuz':9,'on':10};
-      Object.keys(gunSayMap).forEach(function(k){
-        if(norm.includes(k+' gun sonra')||norm.includes(k+' guen sonra')){
-          date=new Date(today.getTime()+gunSayMap[k]*86400000).toISOString().split('T')[0];
-        }
-      });
-    }
-    if(!date){
-      // Ay ismi ara
+    var gm=norm.match(/(\d+)\s*gun\s*sonra/);
+    if(gm){
+      date=new Date(today.getTime()+parseInt(gm[1])*86400000).toISOString().split('T')[0];
+    } else {
       var mks=Object.keys(months);
       for(var i=0;i<mks.length;i++){
         if(norm.includes(mks[i])){
           var mo=months[mks[i]];
-          // Sayıyı bul - ay adından önce veya sonra
-          var normWords=norm.split(/\s+/);
-          var monthPos=normWords.indexOf(mks[i]);
-          var day=null;
-          // Önce bak
-          if(monthPos>0){var prev=parseInt(normWords[monthPos-1]);if(!isNaN(prev)&&prev>=1&&prev<=31)day=prev;}
-          // Sonra bak
-          if(!day&&monthPos<normWords.length-1){var next=parseInt(normWords[monthPos+1]);if(!isNaN(next)&&next>=1&&next<=31)day=next;}
-          if(!day)day=today.getDate();
+          var re1=new RegExp('(\d{1,2})\s*'+mks[i]);
+          var re2=new RegExp(mks[i]+'\s*(\d{1,2})');
+          var dm=norm.match(re1)||norm.match(re2);
+          var day=dm?parseInt(dm[1]):today.getDate();
           var yr=today.getFullYear();
           if(mo<today.getMonth()+1||(mo===today.getMonth()+1&&day<today.getDate()))yr++;
           date=yr+'-'+String(mo).padStart(2,'0')+'-'+String(day).padStart(2,'0');
           break;
         }
       }
-    }
-    if(!date){
-      // Sadece sayı varsa - bu ayın o günü
-      var words=norm.split(/\s+/);
-      for(var wi=0;wi<words.length;wi++){
-        var num=parseInt(words[wi]);
-        if(!isNaN(num)&&num>=1&&num<=31){
-          var yr2=today.getFullYear(),mo2=today.getMonth()+1;
-          if(num<today.getDate()){mo2++;if(mo2>12){mo2=1;yr2++;}}
-          date=yr2+'-'+String(mo2).padStart(2,'0')+'-'+String(num).padStart(2,'0');
-          break;
+      if(!date){
+        var nm=norm.match(/(\d{1,2})/);
+        if(nm){
+          var d=parseInt(nm[1]);
+          if(d>=1&&d<=31){
+            var yr2=today.getFullYear(),mo2=today.getMonth()+1;
+            if(d<today.getDate()){mo2++;if(mo2>12){mo2=1;yr2++;}}
+            date=yr2+'-'+String(mo2).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+          }
         }
       }
     }
   }
-  if(!date)date=new Date(today.getTime()+86400000).toISOString().split('T')[0];
   if(!date)date=new Date(today.getTime()+86400000).toISOString().split('T')[0];
 
   // Saat bul
@@ -1675,157 +1615,135 @@ async function saveVoiceAppt(){
 }
 
 
+// Otomatik giriş kontrolü
+checkAutoLogin();
 
-// ============ SABAH RAPORU ============
-function checkMorningReport(){
-  var now=new Date();
-  var hour=now.getHours();
-  // Sabah 7 ile 12 arası göster
-  if(hour<7||hour>12)return;
-
-  // Bugün gösterildi mi?
-  var lastShown=localStorage.getItem('np_rapor_date');
-  var today=now.toDateString();
-  if(lastShown===today)return;
-
-  // Bugünkü randevuları bul
-  var todayStr=now.toISOString().split('T')[0];
-  var todayAppts=DB.appointments.filter(function(a){return a.date===todayStr;}).sort(function(a,b){return a.time.localeCompare(b.time);});
-
-  // Göster
-  localStorage.setItem('np_rapor_date',today);
-
-  var content=document.getElementById('rapor-content');
-  var dateStr=now.toLocaleDateString('tr-TR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-
-  if(!todayAppts.length){
-    content.innerHTML=
-      '<div style="text-align:center;padding:16px">'+
-      '<div style="font-size:48px;margin-bottom:12px">🌿</div>'+
-      '<div style="font-size:15px;color:var(--text-mid);margin-bottom:4px">'+dateStr+'</div>'+
-      '<div style="font-size:16px;font-weight:700;color:var(--text-dark);margin-top:16px">Bugün randevu yok!</div>'+
-      '<div style="font-size:13px;color:var(--text-soft);margin-top:8px">Rahat bir gün sizi bekliyor 😊</div>'+
-      '</div>';
-  } else {
-    var rows=todayAppts.map(function(a){
-      var c=DB.clients.find(function(x){return x.id===a.clientId;});
-      return '<div class="appt-item" style="margin-bottom:8px">'+
-        '<div class="appt-time" style="min-width:64px;padding:8px"><div class="appt-hr" style="font-size:16px">'+a.time+'</div></div>'+
-        '<div class="appt-info">'+
-          '<div class="appt-name">'+(c?c.name:'?')+'</div>'+
-          '<div class="appt-type">'+a.type+' • '+a.duration+' dk</div>'+
-        '</div>'+
-        '<button class="wa-btn" style="padding:6px 10px;font-size:11px" data-cid="'+(c?c.id:'')+'" data-date="'+a.date+'" data-time="'+a.time+'" onclick="sendWA(this.dataset.cid,this.dataset.date,this.dataset.time)"><i class="fab fa-whatsapp"></i></button>'+
-      '</div>';
-    }).join('');
-
-    content.innerHTML=
-      '<div style="margin-bottom:16px">'+
-        '<div style="font-size:13px;color:var(--text-soft)">'+dateStr+'</div>'+
-        '<div style="font-size:22px;font-weight:800;color:var(--sage);margin-top:4px">'+todayAppts.length+' Randevu</div>'+
-      '</div>'+
-      rows;
-  }
-
-  setTimeout(function(){
-    document.getElementById('m-rapor').classList.add('open');
-  }, 1000);
-}
-
-
-
-// ============ DIYET LISTESI ============
-var dietClientId = null;
-
+// DIYET LISTESI
+var dietClientId=null;
 function openDietModal(id){
-  dietClientId = id;
-  var c = DB.clients.find(function(x){return x.id===id;});
-  // Mevcut diyet listesi varsa doldur
-  var existing = c && c.diet ? c.diet : {};
-  document.getElementById('diet-date').value = existing.date || new Date().toISOString().split('T')[0];
-  document.getElementById('diet-breakfast').value = existing.breakfast || '';
-  document.getElementById('diet-snack1').value = existing.snack1 || '';
-  document.getElementById('diet-lunch').value = existing.lunch || '';
-  document.getElementById('diet-snack2').value = existing.snack2 || '';
-  document.getElementById('diet-dinner').value = existing.dinner || '';
-  document.getElementById('diet-snack3').value = existing.snack3 || '';
-  document.getElementById('diet-water').value = existing.water || '';
-  document.getElementById('diet-exercise').value = existing.exercise || '';
-  document.getElementById('diet-forbidden').value = existing.forbidden || '';
-  document.getElementById('diet-notes').value = existing.notes || '';
+  dietClientId=id;
+  var c=DB.clients.find(function(x){return x.id===id;});
+  var d=c&&c.diet?c.diet:{};
+  document.getElementById('diet-date').value=d.date||new Date().toISOString().split('T')[0];
+  document.getElementById('diet-breakfast').value=d.breakfast||'';
+  document.getElementById('diet-snack1').value=d.snack1||'';
+  document.getElementById('diet-lunch').value=d.lunch||'';
+  document.getElementById('diet-snack2').value=d.snack2||'';
+  document.getElementById('diet-dinner').value=d.dinner||'';
+  document.getElementById('diet-snack3').value=d.snack3||'';
+  document.getElementById('diet-water').value=d.water||'';
+  document.getElementById('diet-exercise').value=d.exercise||'';
+  document.getElementById('diet-forbidden').value=d.forbidden||'';
+  document.getElementById('diet-notes').value=d.notes||'';
   document.getElementById('m-diet').classList.add('open');
 }
-
 async function saveDiet(){
-  if(!dietClientId) return;
-  var c = DB.clients.find(function(x){return x.id===dietClientId;});
-  if(!c) return;
-  var diet = {
-    date: document.getElementById('diet-date').value,
-    breakfast: document.getElementById('diet-breakfast').value,
-    snack1: document.getElementById('diet-snack1').value,
-    lunch: document.getElementById('diet-lunch').value,
-    snack2: document.getElementById('diet-snack2').value,
-    dinner: document.getElementById('diet-dinner').value,
-    snack3: document.getElementById('diet-snack3').value,
-    water: document.getElementById('diet-water').value,
-    exercise: document.getElementById('diet-exercise').value,
-    forbidden: document.getElementById('diet-forbidden').value,
-    notes: document.getElementById('diet-notes').value,
-    updatedAt: new Date().toISOString()
+  if(!dietClientId)return;
+  var c=DB.clients.find(function(x){return x.id===dietClientId;});
+  if(!c)return;
+  c.diet={
+    date:document.getElementById('diet-date').value,
+    breakfast:document.getElementById('diet-breakfast').value,
+    snack1:document.getElementById('diet-snack1').value,
+    lunch:document.getElementById('diet-lunch').value,
+    snack2:document.getElementById('diet-snack2').value,
+    dinner:document.getElementById('diet-dinner').value,
+    snack3:document.getElementById('diet-snack3').value,
+    water:document.getElementById('diet-water').value,
+    exercise:document.getElementById('diet-exercise').value,
+    forbidden:document.getElementById('diet-forbidden').value,
+    notes:document.getElementById('diet-notes').value,
+    updatedAt:new Date().toISOString()
   };
-  c.diet = diet;
   loader(true);
-  await sbSet('clients', c.id, c);
+  await sbSet('clients',c.id,c);
   loader(false);
-  logAct(c.name + ' diyet listesi guncellendi', 'fas fa-apple-alt');
+  logAct(c.name+' diyet listesi guncellendi','fas fa-apple-alt');
   notify('Diyet listesi kaydedildi!');
   closeModal('diet');
-  // Link olustur ve goster
   showDietLink(c);
 }
-
 function showDietLink(c){
-  var baseUrl=window.location.href.split('index.html')[0].replace(/#.*/,'');
-  if(baseUrl.slice(-1)!=='/') baseUrl+='/';
-  var link=baseUrl+'diyet.html?id='+c.id;
-  var nl='\n';
-  var msgParts=['Merhaba '+c.name+'!',nl,'Diyet listeniz hazirlanmistir:',nl,link];
-  var msg=msgParts.join('');
-  var encoded=encodeURIComponent(msg);
+  var base=window.location.href.split('index.html')[0];
+  if(base.slice(-1)!=='/') base+='/';
+  var link=base+'diyet.html?id='+c.id;
   var phone=c.phone?c.phone.replace(/[^0-9]/g,''):'';
-
+  var nl='\n';
+  var msg='Merhaba '+c.name+'!'+nl+'Diyet listeniz hazirlanmistir:'+nl+link;
+  var enc=encodeURIComponent(msg);
   var popup=document.createElement('div');
   popup.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
   var box=document.createElement('div');
-  box.style.cssText='background:white;border-radius:20px;padding:28px;max-width:480px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.3)';
-  var title=document.createElement('div');
-  title.style.cssText='font-size:18px;font-weight:800;margin-bottom:16px';
-  title.innerHTML='<i class="fas fa-link" style="color:var(--sage)"></i> Diyet Listesi Linki';
-  var lbox=document.createElement('div');
-  lbox.style.cssText='background:var(--mint-light);border-radius:10px;padding:12px;font-size:12px;word-break:break-all;margin-bottom:16px;color:var(--text-mid)';
-  lbox.textContent=link;
+  box.style.cssText='background:white;border-radius:20px;padding:28px;max-width:460px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.3)';
+  var t=document.createElement('div');
+  t.style.cssText='font-size:17px;font-weight:800;margin-bottom:12px;color:#1a2e1f';
+  t.innerHTML='<i class="fas fa-link" style="color:#4a7c59"></i> Diyet Listesi Linki';
+  var lb=document.createElement('div');
+  lb.style.cssText='background:#f0faf3;border-radius:10px;padding:12px;font-size:12px;word-break:break-all;margin-bottom:16px;color:#3d5a47';
+  lb.textContent=link;
   var btns=document.createElement('div');
   btns.style.cssText='display:flex;gap:8px;flex-wrap:wrap';
   if(phone){
     var wb=document.createElement('button');
-    wb.style.cssText='flex:1;padding:12px;background:#25D366;color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer';
+    wb.style.cssText='flex:1;padding:11px;background:#25D366;color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer';
     wb.innerHTML='<i class="fab fa-whatsapp"></i> WhatsApp';
-    wb.onclick=function(){window.open('https://wa.me/'+phone+'?text='+encoded,'_blank');popup.remove();};
+    wb.onclick=function(){window.open('https://wa.me/'+phone+'?text='+enc,'_blank');popup.remove();};
     btns.appendChild(wb);
   }
   var cb=document.createElement('button');
-  cb.style.cssText='flex:1;padding:12px;background:var(--mint-light);color:var(--sage-dark);border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer';
+  cb.style.cssText='flex:1;padding:11px;background:#f0faf3;color:#2d5a3d;border:1.5px solid #d8ead1;border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer';
   cb.innerHTML='<i class="fas fa-copy"></i> Kopyala';
-  cb.onclick=function(){if(navigator.clipboard)navigator.clipboard.writeText(link);cb.innerHTML='<i class="fas fa-check"></i> Kopyalandi!';};
+  cb.onclick=function(){if(navigator.clipboard)navigator.clipboard.writeText(link);cb.innerHTML='Kopyalandi!';};
   var xb=document.createElement('button');
-  xb.style.cssText='width:44px;padding:12px;background:var(--red-light);color:var(--red);border:none;border-radius:10px;font-family:inherit;cursor:pointer';
+  xb.style.cssText='width:42px;padding:11px;background:#fde8ea;color:#d4515a;border:none;border-radius:10px;cursor:pointer';
   xb.innerHTML='<i class="fas fa-times"></i>';
   xb.onclick=function(){popup.remove();};
   btns.appendChild(cb);btns.appendChild(xb);
-  box.appendChild(title);box.appendChild(lbox);box.appendChild(btns);
+  box.appendChild(t);box.appendChild(lb);box.appendChild(btns);
   popup.appendChild(box);document.body.appendChild(popup);
 }
+
 </script>
+
+<script>
+if('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js').then(function(reg) {
+      console.log('SW registered');
+    }).catch(function(err) {
+      console.log('SW error:', err);
+    });
+  });
+}
+</script>
+
+<!-- DIYET LISTESI MODAL -->
+<div class="modal-ov" id="m-diet">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-head">
+      <div class="modal-ttl"><i class="fas fa-apple-alt" style="color:var(--sage)"></i> Diyet Listesi</div>
+      <button class="modal-x" onclick="closeModal('diet')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="fgrid">
+        <div class="fg full"><label class="flabel">Program Tarihi</label><input class="fctl" type="date" id="diet-date"></div>
+        <div class="fg full"><label class="flabel">Sabah Kahvaltisi</label><textarea class="fctl" id="diet-breakfast" rows="3" placeholder="2 yumurta, tam tahilli ekmek..."></textarea></div>
+        <div class="fg full"><label class="flabel">Kusluk Ara Ogunu</label><textarea class="fctl" id="diet-snack1" rows="2" placeholder="1 elma, 10 badem..."></textarea></div>
+        <div class="fg full"><label class="flabel">Ogle Yemegi</label><textarea class="fctl" id="diet-lunch" rows="3" placeholder="Izgara tavuk, bulgur pilavi..."></textarea></div>
+        <div class="fg full"><label class="flabel">Ikindi Ara Ogunu</label><textarea class="fctl" id="diet-snack2" rows="2" placeholder="Yogurt, muz..."></textarea></div>
+        <div class="fg full"><label class="flabel">Aksam Yemegi</label><textarea class="fctl" id="diet-dinner" rows="3" placeholder="Balik, sebze..."></textarea></div>
+        <div class="fg full"><label class="flabel">Gece (Opsiyonel)</label><textarea class="fctl" id="diet-snack3" rows="2" placeholder="Bir bardak sut..."></textarea></div>
+        <div class="fg"><label class="flabel">Gunluk Su</label><input class="fctl" id="diet-water" placeholder="En az 2.5 litre"></div>
+        <div class="fg"><label class="flabel">Egzersiz</label><input class="fctl" id="diet-exercise" placeholder="30 dk yuruyus"></div>
+        <div class="fg full"><label class="flabel">Yasaklar</label><textarea class="fctl" id="diet-forbidden" rows="2" placeholder="Seker, beyaz ekmek..."></textarea></div>
+        <div class="fg full"><label class="flabel">Notlar</label><textarea class="fctl" id="diet-notes" rows="2" placeholder="Ozel notlar..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('diet')">Iptal</button>
+      <button class="btn btn-primary" onclick="saveDiet()"><i class="fas fa-save"></i> Kaydet ve Link Olustur</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
