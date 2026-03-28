@@ -1618,90 +1618,154 @@ async function saveVoiceAppt(){
 // Otomatik giriş kontrolü
 checkAutoLogin();
 
-// DIYET LISTESI
+
+
+// ============ DIYET PDF YUKLEME ============
 var dietClientId=null;
+var dietSelectedFile=null;
+
 function openDietModal(id){
   dietClientId=id;
+  dietSelectedFile=null;
+  document.getElementById('diet-upload-btn').style.display='none';
+  document.getElementById('diet-upload-status').style.display='none';
+  document.getElementById('diet-dropzone').style.borderColor='var(--border)';
+  
+  // Mevcut PDF varsa göster
   var c=DB.clients.find(function(x){return x.id===id;});
-  var d=c&&c.diet?c.diet:{};
-  document.getElementById('diet-date').value=d.date||new Date().toISOString().split('T')[0];
-  document.getElementById('diet-breakfast').value=d.breakfast||'';
-  document.getElementById('diet-snack1').value=d.snack1||'';
-  document.getElementById('diet-lunch').value=d.lunch||'';
-  document.getElementById('diet-snack2').value=d.snack2||'';
-  document.getElementById('diet-dinner').value=d.dinner||'';
-  document.getElementById('diet-snack3').value=d.snack3||'';
-  document.getElementById('diet-water').value=d.water||'';
-  document.getElementById('diet-exercise').value=d.exercise||'';
-  document.getElementById('diet-forbidden').value=d.forbidden||'';
-  document.getElementById('diet-notes').value=d.notes||'';
+  var existingDiv=document.getElementById('diet-existing');
+  if(c&&c.dietPdf){
+    existingDiv.style.display='block';
+    document.getElementById('diet-existing-name').textContent=c.dietPdfName||'Diyet Listesi.pdf';
+  } else {
+    existingDiv.style.display='none';
+  }
   document.getElementById('m-diet').classList.add('open');
 }
-async function saveDiet(){
-  if(!dietClientId)return;
+
+function handleDietDrop(e){
+  e.preventDefault();
+  document.getElementById('diet-dropzone').style.borderColor='var(--border)';
+  var file=e.dataTransfer.files[0];
+  if(file&&file.type==='application/pdf'){
+    selectDietFile(file);
+  } else {
+    notify('Sadece PDF dosyasi yukleyebilirsiniz!','error');
+  }
+}
+
+function handleDietFile(input){
+  if(input.files&&input.files[0]){
+    selectDietFile(input.files[0]);
+  }
+}
+
+function selectDietFile(file){
+  if(file.size>10*1024*1024){
+    notify('Dosya 10MB dan buyuk olamaz!','error');
+    return;
+  }
+  dietSelectedFile=file;
+  document.getElementById('diet-file-name').textContent=file.name+' ('+Math.round(file.size/1024)+' KB)';
+  document.getElementById('diet-upload-status').style.display='block';
+  document.getElementById('diet-spinner').style.display='inline';
+  document.getElementById('diet-check').style.display='none';
+  document.getElementById('diet-status-text').textContent='Dosya secildi, yuklemek icin butona basin';
+  document.getElementById('diet-upload-btn').style.display='inline-flex';
+  document.getElementById('diet-dropzone').style.borderColor='var(--sage)';
+}
+
+async function uploadDietPDF(){
+  if(!dietSelectedFile||!dietClientId)return;
   var c=DB.clients.find(function(x){return x.id===dietClientId;});
   if(!c)return;
-  c.diet={
-    date:document.getElementById('diet-date').value,
-    breakfast:document.getElementById('diet-breakfast').value,
-    snack1:document.getElementById('diet-snack1').value,
-    lunch:document.getElementById('diet-lunch').value,
-    snack2:document.getElementById('diet-snack2').value,
-    dinner:document.getElementById('diet-dinner').value,
-    snack3:document.getElementById('diet-snack3').value,
-    water:document.getElementById('diet-water').value,
-    exercise:document.getElementById('diet-exercise').value,
-    forbidden:document.getElementById('diet-forbidden').value,
-    notes:document.getElementById('diet-notes').value,
-    updatedAt:new Date().toISOString()
-  };
+
+  document.getElementById('diet-status-text').textContent='Yukleniyor...';
+  document.getElementById('diet-spinner').style.display='inline';
+  document.getElementById('diet-check').style.display='none';
+  document.getElementById('diet-upload-btn').style.display='none';
   loader(true);
-  await sbSet('clients',c.id,c);
-  loader(false);
-  logAct(c.name+' diyet listesi guncellendi','fas fa-apple-alt');
-  notify('Diyet listesi kaydedildi!');
-  closeModal('diet');
-  showDietLink(c);
-}
-function showDietLink(c){
-  var base=window.location.href.split('index.html')[0];
-  if(base.slice(-1)!=='/') base+='/';
-  var link=base+'diyet.html?id='+c.id;
-  var phone=c.phone?c.phone.replace(/[^0-9]/g,''):'';
-  var nl='\n';
-  var msg='Merhaba '+c.name+'!'+nl+'Diyet listeniz hazirlanmistir:'+nl+link;
-  var enc=encodeURIComponent(msg);
-  var popup=document.createElement('div');
-  popup.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
-  var box=document.createElement('div');
-  box.style.cssText='background:white;border-radius:20px;padding:28px;max-width:460px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.3)';
-  var t=document.createElement('div');
-  t.style.cssText='font-size:17px;font-weight:800;margin-bottom:12px;color:#1a2e1f';
-  t.innerHTML='<i class="fas fa-link" style="color:#4a7c59"></i> Diyet Listesi Linki';
-  var lb=document.createElement('div');
-  lb.style.cssText='background:#f0faf3;border-radius:10px;padding:12px;font-size:12px;word-break:break-all;margin-bottom:16px;color:#3d5a47';
-  lb.textContent=link;
-  var btns=document.createElement('div');
-  btns.style.cssText='display:flex;gap:8px;flex-wrap:wrap';
-  if(phone){
-    var wb=document.createElement('button');
-    wb.style.cssText='flex:1;padding:11px;background:#25D366;color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer';
-    wb.innerHTML='<i class="fab fa-whatsapp"></i> WhatsApp';
-    wb.onclick=function(){window.open('https://wa.me/'+phone+'?text='+enc,'_blank');popup.remove();};
-    btns.appendChild(wb);
+
+  try{
+    var fileName=dietClientId+'_'+Date.now()+'.pdf';
+    var uploadUrl=SB_URL+'/storage/v1/object/diyet/'+fileName;
+    
+    var r=await fetch(uploadUrl,{
+      method:'POST',
+      headers:{
+        'apikey':SB_KEY,
+        'Authorization':'Bearer '+SB_KEY,
+        'Content-Type':'application/pdf'
+      },
+      body:dietSelectedFile
+    });
+
+    if(!r.ok){
+      var err=await r.text();
+      throw new Error(err);
+    }
+
+    // Public URL oluştur
+    var publicUrl=SB_URL+'/storage/v1/object/public/diyet/'+fileName;
+    
+    // Eski PDF varsa sil
+    if(c.dietPdfPath){
+      fetch(SB_URL+'/storage/v1/object/diyet/'+c.dietPdfPath,{
+        method:'DELETE',
+        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+      });
+    }
+
+    // Client'a kaydet
+    c.dietPdf=publicUrl;
+    c.dietPdfName=dietSelectedFile.name;
+    c.dietPdfPath=fileName;
+    await sbSet('clients',c.id,c);
+    loader(false);
+
+    document.getElementById('diet-status-text').textContent='Basariyla yuklendi!';
+    document.getElementById('diet-spinner').style.display='none';
+    document.getElementById('diet-check').style.display='inline';
+
+    logAct(c.name+' diyet PDF yuklendi','fas fa-file-pdf');
+    notify('Diyet listesi yuklendi!');
+
+    // WhatsApp gonder
+    setTimeout(function(){
+      closeModal('diet');
+      sendDietWhatsApp(c);
+    },1000);
+
+  }catch(e){
+    loader(false);
+    notify('Yukleme hatasi: '+e.message,'error');
+    document.getElementById('diet-status-text').textContent='Hata! Tekrar deneyin.';
+    document.getElementById('diet-upload-btn').style.display='inline-flex';
   }
-  var cb=document.createElement('button');
-  cb.style.cssText='flex:1;padding:11px;background:#f0faf3;color:#2d5a3d;border:1.5px solid #d8ead1;border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer';
-  cb.innerHTML='<i class="fas fa-copy"></i> Kopyala';
-  cb.onclick=function(){if(navigator.clipboard)navigator.clipboard.writeText(link);cb.innerHTML='Kopyalandi!';};
-  var xb=document.createElement('button');
-  xb.style.cssText='width:42px;padding:11px;background:#fde8ea;color:#d4515a;border:none;border-radius:10px;cursor:pointer';
-  xb.innerHTML='<i class="fas fa-times"></i>';
-  xb.onclick=function(){popup.remove();};
-  btns.appendChild(cb);btns.appendChild(xb);
-  box.appendChild(t);box.appendChild(lb);box.appendChild(btns);
-  popup.appendChild(box);document.body.appendChild(popup);
 }
+
+function viewCurrentDiet(){
+  var c=DB.clients.find(function(x){return x.id===dietClientId;});
+  if(c&&c.dietPdf) window.open(c.dietPdf,'_blank');
+}
+
+function sendCurrentDiet(){
+  var c=DB.clients.find(function(x){return x.id===dietClientId;});
+  if(c&&c.dietPdf){
+    closeModal('diet');
+    sendDietWhatsApp(c);
+  }
+}
+
+function sendDietWhatsApp(c){
+  if(!c.phone){notify('Telefon numarasi yok!','error');return;}
+  var phone=c.phone.replace(/[^0-9]/g,'');
+  var nl='\n';
+  var msg='Merhaba '+c.name+'!'+nl+nl+'Diyet listeniz hazirlanmistir.'+nl+'Asagidaki linkten indirebilirsiniz:'+nl+nl+c.dietPdf+nl+nl+'Iyi gunler dileriz.'+nl+'- '+(DB.settings.name||'Diyetisyeniniz');
+  window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(msg),'_blank');
+  logAct(c.name+"'e diyet listesi gonderildi",'fab fa-whatsapp');
+}
+
 
 </script>
 
@@ -1717,31 +1781,57 @@ if('serviceWorker' in navigator) {
 }
 </script>
 
-<!-- DIYET LISTESI MODAL -->
+<!-- DIYET PDF MODAL -->
 <div class="modal-ov" id="m-diet">
-  <div class="modal" style="max-width:640px">
+  <div class="modal" style="max-width:500px">
     <div class="modal-head">
-      <div class="modal-ttl"><i class="fas fa-apple-alt" style="color:var(--sage)"></i> Diyet Listesi</div>
+      <div class="modal-ttl"><i class="fas fa-file-pdf" style="color:#d4515a"></i> Diyet Listesi Yükle</div>
       <button class="modal-x" onclick="closeModal('diet')"><i class="fas fa-times"></i></button>
     </div>
     <div class="modal-body">
-      <div class="fgrid">
-        <div class="fg full"><label class="flabel">Program Tarihi</label><input class="fctl" type="date" id="diet-date"></div>
-        <div class="fg full"><label class="flabel">Sabah Kahvaltisi</label><textarea class="fctl" id="diet-breakfast" rows="3" placeholder="2 yumurta, tam tahilli ekmek..."></textarea></div>
-        <div class="fg full"><label class="flabel">Kusluk Ara Ogunu</label><textarea class="fctl" id="diet-snack1" rows="2" placeholder="1 elma, 10 badem..."></textarea></div>
-        <div class="fg full"><label class="flabel">Ogle Yemegi</label><textarea class="fctl" id="diet-lunch" rows="3" placeholder="Izgara tavuk, bulgur pilavi..."></textarea></div>
-        <div class="fg full"><label class="flabel">Ikindi Ara Ogunu</label><textarea class="fctl" id="diet-snack2" rows="2" placeholder="Yogurt, muz..."></textarea></div>
-        <div class="fg full"><label class="flabel">Aksam Yemegi</label><textarea class="fctl" id="diet-dinner" rows="3" placeholder="Balik, sebze..."></textarea></div>
-        <div class="fg full"><label class="flabel">Gece (Opsiyonel)</label><textarea class="fctl" id="diet-snack3" rows="2" placeholder="Bir bardak sut..."></textarea></div>
-        <div class="fg"><label class="flabel">Gunluk Su</label><input class="fctl" id="diet-water" placeholder="En az 2.5 litre"></div>
-        <div class="fg"><label class="flabel">Egzersiz</label><input class="fctl" id="diet-exercise" placeholder="30 dk yuruyus"></div>
-        <div class="fg full"><label class="flabel">Yasaklar</label><textarea class="fctl" id="diet-forbidden" rows="2" placeholder="Seker, beyaz ekmek..."></textarea></div>
-        <div class="fg full"><label class="flabel">Notlar</label><textarea class="fctl" id="diet-notes" rows="2" placeholder="Ozel notlar..."></textarea></div>
+      <div style="background:var(--mint-light);border-radius:12px;padding:16px;margin-bottom:20px;font-size:13px;color:var(--text-mid)">
+        <i class="fas fa-info-circle" style="color:var(--sage)"></i>
+        PDF dosyasını yükleyin. Yüklendikten sonra danışana WhatsApp ile otomatik link gönderebilirsiniz.
+      </div>
+      
+      <!-- Mevcut PDF varsa göster -->
+      <div id="diet-existing" style="display:none;background:#fde8ea;border-radius:12px;padding:14px;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:8px"><i class="fas fa-file-pdf"></i> Mevcut Diyet Listesi</div>
+        <div id="diet-existing-name" style="font-size:12px;color:var(--text-mid);margin-bottom:10px"></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" id="diet-view-btn" onclick="viewCurrentDiet()"><i class="fas fa-eye"></i> Görüntüle</button>
+          <button class="wa-btn" style="padding:7px 13px;font-size:12px" id="diet-send-btn" onclick="sendCurrentDiet()"><i class="fab fa-whatsapp"></i> Gönder</button>
+        </div>
+      </div>
+
+      <!-- PDF Yükleme -->
+      <div style="border:2px dashed var(--border);border-radius:14px;padding:32px;text-align:center;cursor:pointer;transition:all 0.2s" 
+           id="diet-dropzone"
+           onclick="document.getElementById('diet-file').click()"
+           ondragover="event.preventDefault();this.style.borderColor='var(--sage)'"
+           ondragleave="this.style.borderColor='var(--border)'"
+           ondrop="handleDietDrop(event)">
+        <i class="fas fa-cloud-upload-alt" style="font-size:40px;color:var(--text-muted);margin-bottom:12px;display:block"></i>
+        <div style="font-size:15px;font-weight:700;color:var(--text-dark);margin-bottom:6px">PDF Dosyası Seçin</div>
+        <div style="font-size:12px;color:var(--text-muted)">veya dosyayı buraya sürükleyin</div>
+        <input type="file" id="diet-file" accept=".pdf" style="display:none" onchange="handleDietFile(this)">
+      </div>
+
+      <!-- Yükleme durumu -->
+      <div id="diet-upload-status" style="display:none;margin-top:16px">
+        <div style="display:flex;align-items:center;gap:10px;background:var(--mint-light);border-radius:10px;padding:12px">
+          <i class="fas fa-spinner fa-spin" style="color:var(--sage)" id="diet-spinner"></i>
+          <i class="fas fa-check-circle" style="color:var(--sage);display:none" id="diet-check"></i>
+          <div>
+            <div style="font-size:13px;font-weight:700" id="diet-status-text">Yükleniyor...</div>
+            <div style="font-size:11px;color:var(--text-muted)" id="diet-file-name"></div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('diet')">Iptal</button>
-      <button class="btn btn-primary" onclick="saveDiet()"><i class="fas fa-save"></i> Kaydet ve Link Olustur</button>
+      <button class="btn btn-secondary" onclick="closeModal('diet')">Kapat</button>
+      <button class="btn btn-primary" id="diet-upload-btn" onclick="uploadDietPDF()" style="display:none"><i class="fas fa-upload"></i> Yükle ve Gönder</button>
     </div>
   </div>
 </div>
