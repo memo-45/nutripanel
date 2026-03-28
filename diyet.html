@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diyet Listem</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135deg,#f0faf3,#faf8f4);min-height:100vh;padding:20px}
+.container{max-width:600px;margin:0 auto}
+.header{background:linear-gradient(135deg,#2d5a3d,#4a7c59);border-radius:20px;padding:28px;color:white;margin-bottom:20px;text-align:center}
+.header .icon{font-size:48px;margin-bottom:12px}
+.header h1{font-size:24px;font-weight:800;margin-bottom:4px}
+.header p{opacity:0.8;font-size:14px}
+.card{background:white;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(45,90,61,0.08);border:1px solid #edf5e9}
+.meal-title{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:800;color:#2d5a3d;margin-bottom:12px}
+.meal-icon{font-size:24px}
+.meal-content{font-size:14px;color:#3d5a47;line-height:1.8;white-space:pre-line}
+.info-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #edf5e9;font-size:14px;color:#3d5a47}
+.info-row:last-child{border-bottom:none}
+.info-row i{color:#4a7c59;width:20px}
+.warning{background:#fde8ea;border-radius:12px;padding:16px;margin-bottom:16px}
+.warning-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:#d4515a;margin-bottom:8px}
+.warning-content{font-size:13px;color:#b02030;line-height:1.6;white-space:pre-line}
+.notes{background:#f5e6c0;border-radius:12px;padding:16px;margin-bottom:16px}
+.notes-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:#7a5e1a;margin-bottom:8px}
+.notes-content{font-size:13px;color:#5a4010;line-height:1.6;white-space:pre-line}
+.footer{text-align:center;padding:20px;color:#9ab5a0;font-size:12px}
+.date-badge{background:rgba(255,255,255,0.2);border-radius:20px;padding:6px 16px;font-size:12px;display:inline-block;margin-top:8px}
+.loading{text-align:center;padding:60px 20px;color:#9ab5a0}
+.loading i{font-size:48px;margin-bottom:16px;display:block}
+.error{text-align:center;padding:60px 20px;color:#d4515a}
+.error i{font-size:48px;margin-bottom:16px;display:block;color:#f5c0c4}
+</style>
+</head>
+<body>
+<div class="container">
+  <div id="content"><div class="loading"><i class="fas fa-leaf fa-spin"></i><p>Yükleniyor...</p></div></div>
+  <div class="footer">NutriPanel • Diyetisyen Yönetim Sistemi</div>
+</div>
+
+<script>
+var SB_URL='https://tzlfxencaeekzeuwvwgt.supabase.co';
+var SB_KEY='sb_publishable_J47akSEl0xlzcq-xhMQ3Ug_dfulVitn';
+
+function getParam(name){
+  var url=new URL(window.location.href);
+  return url.searchParams.get(name);
+}
+
+async function loadDiet(){
+  var id=getParam('id');
+  if(!id){showError('Gecersiz link.');return;}
+  try{
+    var r=await fetch(SB_URL+'/rest/v1/clients?id=eq.'+id+'&select=*',{
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+    });
+    var rows=await r.json();
+    if(!rows||!rows.length){showError('Danisan bulunamadi.');return;}
+    var client=rows[0].data;
+    if(!client.diet){showError('Henuz diyet listesi hazirlanmamis.');return;}
+    renderDiet(client);
+  }catch(e){showError('Baglanti hatasi. Lutfen tekrar deneyin.');}
+}
+
+function renderDiet(c){
+  var d=c.diet;
+  var dateStr=d.date?new Date(d.date).toLocaleDateString('tr-TR',{year:'numeric',month:'long',day:'numeric'}):'';
+  
+  var meals=[
+    {icon:'🌅',title:'Sabah Kahvaltisi',key:'breakfast'},
+    {icon:'🍎',title:'Kusluk (Ara Ogun)',key:'snack1'},
+    {icon:'☀️',title:'Ogle Yemegi',key:'lunch'},
+    {icon:'🍊',title:'Ikindi (Ara Ogun)',key:'snack2'},
+    {icon:'🌙',title:'Aksam Yemegi',key:'dinner'},
+    {icon:'⭐',title:'Gece',key:'snack3'},
+  ];
+
+  var html='<div class="header">'+
+    '<div class="icon">🥗</div>'+
+    '<h1>'+c.name+'</h1>'+
+    '<p>Kisisel Diyet Listeniz</p>'+
+    (dateStr?'<span class="date-badge">'+dateStr+' tarihli program</span>':'')+
+  '</div>';
+
+  // Öğünler
+  meals.forEach(function(m){
+    if(!d[m.key])return;
+    html+='<div class="card">'+
+      '<div class="meal-title"><span class="meal-icon">'+m.icon+'</span>'+m.title+'</div>'+
+      '<div class="meal-content">'+escHtml(d[m.key])+'</div>'+
+    '</div>';
+  });
+
+  // Su ve egzersiz
+  if(d.water||d.exercise){
+    html+='<div class="card">';
+    if(d.water) html+='<div class="info-row"><i class="fas fa-tint"></i> <strong>Su:</strong> '+escHtml(d.water)+'</div>';
+    if(d.exercise) html+='<div class="info-row"><i class="fas fa-running"></i> <strong>Egzersiz:</strong> '+escHtml(d.exercise)+'</div>';
+    html+='</div>';
+  }
+
+  // Yasaklar
+  if(d.forbidden){
+    html+='<div class="warning">'+
+      '<div class="warning-title"><i class="fas fa-exclamation-triangle"></i> Yasaklar / Dikkat</div>'+
+      '<div class="warning-content">'+escHtml(d.forbidden)+'</div>'+
+    '</div>';
+  }
+
+  // Notlar
+  if(d.notes){
+    html+='<div class="notes">'+
+      '<div class="notes-title"><i class="fas fa-sticky-note"></i> Diyetisyen Notlari</div>'+
+      '<div class="notes-content">'+escHtml(d.notes)+'</div>'+
+    '</div>';
+  }
+
+  document.getElementById('content').innerHTML=html;
+  document.title=c.name+' - Diyet Listesi';
+}
+
+function escHtml(t){
+  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function showError(msg){
+  document.getElementById('content').innerHTML='<div class="error"><i class="fas fa-leaf"></i><p>'+msg+'</p></div>';
+}
+
+loadDiet();
+</script>
+</body>
+</html>
