@@ -512,7 +512,8 @@ textarea.fctl{resize:vertical;min-height:90px}
 
 <div class="modal-ov" id="m-appt">
   <div class="modal">
-    <div class="modal-head"><div class="modal-ttl"><i class="fas fa-calendar-plus"></i> Randevu</div><button class="modal-x" onclick="closeModal('appt')"><i class="fas fa-times"></i></button></div>
+    <input type="hidden" id="a-edit-id">
+    <div class="modal-head"><div class="modal-ttl"><i class="fas fa-calendar-plus"></i> <span id="a-modal-ttl">Randevu</span></div><button class="modal-x" onclick="closeModal('appt')"><i class="fas fa-times"></i></button></div>
     <div class="modal-body"><div class="fgrid">
       <div class="fg full"><label class="flabel">Danışan *</label><select class="fctl" id="a-client"></select></div>
       <div class="fg"><label class="flabel">Tarih *</label><input class="fctl" type="date" id="a-date"></div>
@@ -524,7 +525,7 @@ textarea.fctl{resize:vertical;min-height:90px}
     <div style="background:var(--mint-light);border-radius:10px;padding:12px;margin-top:8px;font-size:13px;color:var(--text-mid)">
       <i class="fab fa-whatsapp" style="color:#25D366"></i> Randevu 1 gün öncesinde WhatsApp hatırlatması gönderilebilir.
     </div></div>
-    <div class="modal-foot"><button class="btn btn-secondary" onclick="closeModal('appt')">İptal</button><button class="btn btn-primary" onclick="saveAppt()"><i class="fas fa-save"></i> Kaydet</button></div>
+    <div class="modal-foot"><button class="btn btn-secondary" onclick="closeModal('appt')">İptal</button><button class="btn btn-primary" id="a-save-btn" onclick="saveAppt()"><i class="fas fa-save"></i> Kaydet</button></div>
   </div>
 </div>
 
@@ -833,7 +834,8 @@ function showDetail(id){
       wabtn.className='wa-btn';wabtn.style.cssText='padding:5px 10px;font-size:11px';wabtn.innerHTML='<i class="fab fa-whatsapp"></i>';
       return'<tr><td>'+new Date(a.date).toLocaleDateString('tr-TR')+'</td><td><strong>'+a.time+'</strong></td><td>'+a.type+'</td><td>'+a.duration+' dk</td>'+
         '<td><span class="badge '+(up?'bg-green':'bg-gray')+'">'+(up?'Yaklaşan':'Tamamlandı')+'</span></td>'+
-        '<td><button class="wa-btn" style="padding:5px 10px;font-size:11px" data-cid="'+a.clientId+'" data-date="'+a.date+'" data-time="'+a.time+'" onclick="sendWA(this.dataset.cid,this.dataset.date,this.dataset.time)"><i class="fab fa-whatsapp"></i></button></td></tr>';
+        '<td style="display:flex;gap:4px"><button class="wa-btn" style="padding:5px 10px;font-size:11px" data-cid="'+a.clientId+'" data-date="'+a.date+'" data-time="'+a.time+'" onclick="sendWA(this.dataset.cid,this.dataset.date,this.dataset.time)"><i class="fab fa-whatsapp"></i></button>'+
+              '<button class="btn btn-secondary btn-sm" data-aid="'+a.id+'" onclick="editApptModal(this.dataset.aid)"><i class="fas fa-edit"></i></button></td></tr>';
     }).join('')+'</tbody></table>':'<div class="empty"><i class="fas fa-calendar-times"></i><p>Randevu yok</p></div>';
 
   document.getElementById('detay-content').innerHTML=
@@ -897,17 +899,56 @@ async function saveMeasurement(){
 }
 
 // APPOINTMENTS
+
+// RANDEVU DUZENLEME
+function editApptModal(id){
+  var a=DB.appointments.find(function(x){return x.id===id;});
+  if(!a)return;
+  fillClientSelects();
+  document.getElementById('a-edit-id').value=id;
+  document.getElementById('a-modal-ttl').textContent='Randevu Duzenle';
+  document.getElementById('a-save-btn').innerHTML='<i class="fas fa-save"></i> Guncelle';
+  setTimeout(function(){
+    document.getElementById('a-client').value=a.clientId;
+    document.getElementById('a-date').value=a.date;
+    document.getElementById('a-time').value=a.time;
+    document.getElementById('a-dur').value=a.duration;
+    document.getElementById('a-type').value=a.type;
+    document.getElementById('a-note').value=a.note||'';
+  },50);
+  document.getElementById('m-appt').classList.add('open');
+}
+
 async function saveAppt(){
   var cid=document.getElementById('a-client').value;
   var date=document.getElementById('a-date').value;
   var time=document.getElementById('a-time').value;
-  if(!cid||!date||!time){notify('Tüm alanları doldurun!','error');return;}
-  var a={id:Date.now().toString(),clientId:cid,date:date,time:time,duration:document.getElementById('a-dur').value,type:document.getElementById('a-type').value,note:document.getElementById('a-note').value};
-  DB.appointments.push(a);
-  loader(true);await sbSet('appointments',a.id,a);loader(false);
-  var c=DB.clients.find(function(x){return x.id===cid;});
-  logAct((c?c.name:'Danışan')+' randevu: '+new Date(date).toLocaleDateString('tr-TR')+' '+time,'fas fa-calendar-plus');
-  notify('Randevu eklendi!');
+  if(!cid||!date||!time){notify('Tum alanlari doldurun!','error');return;}
+  var editId=document.getElementById('a-edit-id').value;
+  var a={
+    id:editId||Date.now().toString(),
+    clientId:cid,date:date,time:time,
+    duration:document.getElementById('a-dur').value,
+    type:document.getElementById('a-type').value,
+    note:document.getElementById('a-note').value
+  };
+  loader(true);
+  if(editId){
+    DB.appointments=DB.appointments.map(function(x){return x.id===editId?a:x;});
+    await sbSet('appointments',a.id,a);
+    notify('Randevu guncellendi!');
+    logAct('Randevu guncellendi','fas fa-calendar-check');
+  } else {
+    DB.appointments.push(a);
+    await sbSet('appointments',a.id,a);
+    var c=DB.clients.find(function(x){return x.id===cid;});
+    logAct((c?c.name:'Danisan')+' randevu: '+new Date(date).toLocaleDateString('tr-TR')+' '+time,'fas fa-calendar-plus');
+    notify('Randevu eklendi!');
+  }
+  loader(false);
+  document.getElementById('a-edit-id').value='';
+  document.getElementById('a-modal-ttl').textContent='Randevu';
+  document.getElementById('a-save-btn').innerHTML='<i class="fas fa-save"></i> Kaydet';
   closeModal('appt');refreshDash();renderAppts();
 }
 
@@ -948,9 +989,11 @@ function renderAppts(){
     var td=tr.lastElementChild;
     var wb=document.createElement('button');wb.className='wa-btn';wb.style.cssText='padding:6px 10px;font-size:11px';wb.innerHTML='<i class="fab fa-whatsapp"></i>';
     wb.onclick=(function(cid,d,t){return function(){sendWA(cid,d,t);};})(a.clientId,a.date,a.time);
+    var eb=document.createElement('button');eb.className='btn btn-secondary btn-sm';eb.innerHTML='<i class="fas fa-edit"></i>';
+    eb.onclick=(function(aid){return function(){editApptModal(aid);};})(a.id);
     var db=document.createElement('button');db.className='btn btn-danger btn-sm';db.innerHTML='<i class="fas fa-trash"></i>';
     db.onclick=(function(aid){return function(){deleteAppt(aid);};})(a.id);
-    td.appendChild(wb);td.appendChild(db);
+    td.appendChild(wb);td.appendChild(eb);td.appendChild(db);
     tbody.appendChild(tr);
   });
 }
