@@ -607,7 +607,13 @@ function showApp(){
   document.getElementById('app').style.display='flex';
   document.getElementById('sbName').textContent=DB.settings.name;
   setTimeout(function(){document.getElementById('loginScreen').style.display='none';},600);
+  // Badge'leri hemen güncelle
+  document.getElementById('nb-clients').textContent=DB.clients.length;
+  var today=new Date().toDateString();
+  var ua=DB.appointments.filter(function(a){return new Date(a.date)>=new Date(today);}).length;
+  document.getElementById('nb-appts').textContent=ua;
   refreshDash();loadSettingsForm();
+  setTimeout(checkMorningReport,1500);
 }
 
 function doLogout(){
